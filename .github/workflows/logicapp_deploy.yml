@@ -27,13 +27,14 @@ jobs:
     - name: Package logic
       run: | 
         cd src/logicApp
-        zip -r logic.zip .
+        mkdir -p ../build-art
+        zip -r ../build-art/logic.zip .
 
     - name: Upload app zip package
       uses: actions/upload-artifact@v2
       with:
         name: logic
-        path: ./src/logicApp
+        path: ./src/build-art
         retention-days: 1 
 
   # logic_app_deploy:     
