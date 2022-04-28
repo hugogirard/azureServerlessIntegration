@@ -1,0 +1,56 @@
+name: Create Azure Resources
+
+on:
+ push:
+  branches:
+    - "main"
+  paths:
+    - "bicep/**/*"
+ workflow_dispatch:
+
+env:
+  LOCATION: 'eastus'
+
+jobs:
+  create-azure-resources:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v2
+
+      - name: Validate that bicep builds
+        run: az bicep build -f main.bicep
+        working-directory: ./bicep
+
+      # Scan ARM template for security
+      - name: Run Microsoft Security DevOps
+        uses: microsoft/security-devops-action@preview
+        id: mssecurity
+
+      - name: Upload results to Security tab
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: ${{ steps.mssecurity.outputs.sarifFile }}        
+
+      - uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: deploy
+        id: createResources
+        uses: azure/arm-deploy@v1
+        with:
+          subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION }}
+          scope: subscription
+          region: ${{ env.LOCATION }}          
+          template: ./bicep/main.json
+          parameters: location=${{ env.LOCATION }} adminUsername=${{ secrets.ADMIN_USERNAME }} adminPassword=${{ secrets.ADMIN_PASSWORD }} publisherEmail=${{ secrets.PUBLISHER_EMAIL}} publisherName=${{ secrets.PUBLISHER_NAME }}
+
+      - uses: gliech/create-github-secret-action@v1
+        name: Write Logic App Name
+        with:
+          name: LOGIC_APP_NAME
+          value: ${{ steps.createResources.outputs.logicAppName }}
+          pa_token: ${{ secrets.PA_TOKEN }}               

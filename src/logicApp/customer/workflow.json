@@ -1,0 +1,173 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "EVALUATE_OPERATION": {
+                "type": "Switch",
+                "expression": "@triggerBody()?['operation']",
+                "cases": {
+                    "ADD_CUSTOMER": {
+                        "case": "add",
+                        "actions": {
+                            "Create_or_update_customer": {
+                                "type": "ServiceProvider",
+                                "inputs": {
+                                    "parameters": {
+                                        "databaseId": "contoso",
+                                        "containerId": "customer",
+                                        "item": "@body('Parse_JSON_Payload_HTTP_Request')",
+                                        "partitionKey": "@triggerBody()?['payload']?['id']",
+                                        "isUpsert": true
+                                    },
+                                    "serviceProviderConfiguration": {
+                                        "connectionName": "AzureCosmosDB",
+                                        "operationId": "CreateOrUpdateDocument",
+                                        "serviceProviderId": "/serviceProviders/AzureCosmosDB"
+                                    }
+                                },
+                                "runAfter": {}
+                            },
+                            "Create_Update_Response": {
+                                "type": "Response",
+                                "kind": "http",
+                                "inputs": {
+                                    "statusCode": 200,
+                                    "body": "@body('Create_or_update_customer')?['content']"
+                                },
+                                "runAfter": {
+                                    "Create_or_update_customer": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "GET_CUSTOMERS": {
+                        "case": "get",
+                        "actions": {
+                            "Select_customer": {
+                                "type": "ServiceProvider",
+                                "inputs": {
+                                    "parameters": {
+                                        "databaseId": "contoso",
+                                        "containerId": "customer",
+                                        "queryText": "SELECT * FROM c"
+                                    },
+                                    "serviceProviderConfiguration": {
+                                        "connectionName": "AzureCosmosDB",
+                                        "operationId": "QueryDocuments",
+                                        "serviceProviderId": "/serviceProviders/AzureCosmosDB"
+                                    }
+                                },
+                                "runAfter": {}
+                            },
+                            "Response_Customers": {
+                                "type": "Response",
+                                "kind": "http",
+                                "inputs": {
+                                    "statusCode": 200,
+                                    "body": "@body('Select_customer')?['items']"
+                                },
+                                "runAfter": {
+                                    "Select_customer": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "default": {
+                    "actions": {
+                        "Response": {
+                            "type": "Response",
+                            "kind": "http",
+                            "inputs": {
+                                "statusCode": 400,
+                                "body": "Invalid Operation"
+                            },
+                            "runAfter": {}
+                        }
+                    }
+                },
+                "runAfter": {
+                    "Parse_JSON_Payload_HTTP_Request": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Parse_JSON_Payload_HTTP_Request": {
+                "type": "ParseJson",
+                "inputs": {
+                    "content": "@triggerBody()?['payload']",
+                    "schema": {
+                        "id": "10",
+                        "firstname": "hugo",
+                        "lastname": "girard",
+                        "address": {
+                            "country": "canada",
+                            "stateOrProvince": "quebec",
+                            "cividNumber": "555",
+                            "streetName": "2020 du finfin",
+                            "postalCodeOrZipCode": "J7J7J7"
+                        }
+                    }
+                },
+                "runAfter": {}
+            }
+        },
+        "triggers": {
+            "manual": {
+                "type": "Request",
+                "kind": "Http",
+                "inputs": {
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "operation": {
+                                "type": "string"
+                            },
+                            "payload": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string"
+                                    },
+                                    "firstname": {
+                                        "type": "string"
+                                    },
+                                    "lastname": {
+                                        "type": "string"
+                                    },
+                                    "address": {
+                                        "type": "object",
+                                        "properties": {
+                                            "country": {
+                                                "type": "string"
+                                            },
+                                            "stateOrProvince": {
+                                                "type": "string"
+                                            },
+                                            "cividNumber": {
+                                                "type": "string"
+                                            },
+                                            "streetName": {
+                                                "type": "string"
+                                            },
+                                            "postalCodeOrZipCode": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {}
+    },
+    "kind": "Stateful"
+}

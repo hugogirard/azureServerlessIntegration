@@ -1,0 +1,125 @@
+targetScope='subscription'
+
+@description('The location of all Azure Resources')
+param location string
+
+@secure()
+param adminUsername string
+
+@secure()
+param adminPassword string
+
+@secure()
+param publisherEmail string
+
+@secure()
+param publisherName string
+
+var integrateRgName = 'rg-integration-layer'
+var hubRgName = 'rg-integration-hub'
+var premiseRgName = 'rg-premise-contoso'
+
+var suffixIntegrationGuid = uniqueString(rgIntegration.id)
+
+resource rgIntegration 'Microsoft.Resources/resourceGroups@2021-04-01' = {
+  name: integrateRgName
+  location: location
+}
+
+resource rgHub 'Microsoft.Resources/resourceGroups@2021-04-01' = {
+  name: hubRgName
+  location: location
+}
+
+resource rgOnPremise 'Microsoft.Resources/resourceGroups@2021-04-01' = {
+  name: premiseRgName
+  location: location
+}
+
+// ------- Begin Virtual Network -------
+
+module vnetIntegration 'modules/networking/vnet.integration.bicep' = {
+  scope: resourceGroup(rgIntegration.name)
+  name: 'vnetIntegration'
+  params: {
+    location: location
+  }
+}
+
+module vnetOnPremise 'modules/networking/vnet.onpremise.bicep' = {
+  scope: resourceGroup(rgOnPremise.name)
+  name: 'vnetOnPremise'
+  params: {
+    location: location
+  }
+}
+
+module dataFactory 'modules/dataFactory/factory.bicep' = {
+  scope: resourceGroup(rgIntegration.name)
+  name: 'dataFactory'
+  params: {
+    location: location
+    suffix: suffixIntegrationGuid
+  }
+}
+
+module monitoring 'modules/monitoring/insight.bicep' = {
+  scope: resourceGroup(rgIntegration.name)
+  name: 'monitoring'
+  params: {
+    location: location
+    suffix: suffixIntegrationGuid
+  }
+}
+
+module storage 'modules/storage/storage.bicep' = {
+  scope: resourceGroup(rgIntegration.name)
+  name: 'storage'
+  params: {
+    location: location
+  }
+}
+
+module logicApp 'modules/logicapp/logic.bicep' = {
+  scope: resourceGroup(rgIntegration.name)
+  name: 'logicapp'
+  params: {
+    insightName: monitoring.outputs.insightName
+    location: location
+    storageName: storage.outputs.strLogicName
+    suffix: suffixIntegrationGuid
+    cosmosDBName: cosmos.outputs.cosmosDBName
+  }
+}
+
+module cosmos 'modules/cosmos/db.bicep' = {
+  scope: resourceGroup(rgIntegration.name)
+  name: 'cosmos'
+  params: {
+    location: location
+    suffix: suffixIntegrationGuid
+  }
+}
+
+module bus 'modules/bus/servicebus.bicep' = {
+  scope: resourceGroup(rgIntegration.name)
+  name: 'bus'
+  params: {
+    location: location
+    suffix: suffixIntegrationGuid
+  }
+}
+
+module apim 'modules/apim/apim.bicep' = {
+  scope: resourceGroup(rgIntegration.name)
+  name: 'apim'
+  params: {
+    location: location 
+    publisherEmail: publisherEmail
+    publisherName: publisherName
+    subnetId: vnetIntegration.outputs.apimSubnetId
+    suffix: suffixIntegrationGuid
+  }
+}
+
+output logicAppName string = logicApp.outputs.logicAppName

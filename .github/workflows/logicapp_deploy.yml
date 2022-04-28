@@ -1,0 +1,73 @@
+name: Deploy Logic Apps
+
+env:
+  RESOURCE_GROUP_NAME: rg-integration-layer
+
+on:
+ push:
+  branches:
+    - "main"
+  paths:
+    - "src/logicApp/*"
+ workflow_dispatch:
+
+jobs:
+  logic_app_build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v1
+
+    - name: Package logic
+      run: (cd src/logicApp; mkdir -p ../build-art; zip -r ../build-art/logic.zip .)
+
+    - name: Upload app zip package
+      uses: actions/upload-artifact@v2
+      with:
+        name: logic
+        path: ./build-art/
+        retention-days: 1 
+
+  logic_app_deploy:     
+    
+    runs-on: ubuntu-latest
+    needs: [logic_app_build]
+
+    steps: 
+
+    - name: Checkout
+      uses: actions/checkout@v1    
+
+    - name: Login via Az module
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        enable-AzPSSession: true 
+
+    - uses: actions/download-artifact@master
+      with:
+        name: logic
+        path: ./build-art/
+        
+    - name: Get publish Profile
+      id: publishprofile
+      uses: azure/powershell@v1
+      with:
+        inlineScript: |          
+          $profile = Get-AzWebAppPublishingProfile `
+                     -ResourceGroupName ${{ env.RESOURCE_GROUP_NAME }} `
+                     -Name ${{ secrets.LOGIC_APP_NAME }}
+          $profile = $profile.Replace("`r", "").Replace("`n", "")          
+          Write-Output "::set-output name=profile::$profile"
+        azPSVersion: latest
+
+    - name: Deploy to Azure Logic App
+      uses: Azure/functions-action@v1.3.1
+      id: la
+      with:
+        app-name: ${{ env.RESOURCE_GROUP_NAME }}
+        package: './build-art/logic.zip'
+        publish-profile: ${{steps.publishprofile.outputs.profile}}        

@@ -1,0 +1,45 @@
+param location string
+
+var strLogicApp = 'strl${uniqueString(resourceGroup().id)}'
+var strFile = 'strf${uniqueString(resourceGroup().id)}'
+
+resource storageAccountApp 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+  name: strLogicApp
+  location: location
+  sku: {
+    name: 'Standard_LRS'    
+  }
+  tags: {
+    'description': 'LogicApp Storage'
+  }
+  kind: 'StorageV2'
+  properties: {    
+    accessTier: 'Hot'
+  }
+}
+
+resource storageUploadLargeFile 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+  name: strFile
+  location: location
+  sku: {
+    name: 'Standard_LRS'    
+  }
+  tags: {
+    'description': 'File Transfer Storage'
+  }
+  kind: 'StorageV2'
+  properties: {    
+    accessTier: 'Hot'
+  }
+}
+
+resource containerDocumentUpload 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-04-01' = {  
+  name: '${storageUploadLargeFile.name}/default/documents'
+  properties: {
+    publicAccess: 'None'
+  }
+}
+
+output strLogicName string = storageAccountApp.name
+
+
