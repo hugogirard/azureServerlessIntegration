@@ -33,7 +33,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: logic
-        path: ./build-art/
+        path: ./src/logicApp
         retention-days: 1 
 
   # logic_app_deploy:     
