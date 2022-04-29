@@ -9,9 +9,9 @@
       },
       "displayName": "CosmosDB"
     },
-    "serviceBus": {
+    "serviceBusSend": {
       "parameterValues": {
-        "connectionString": "@appsetting('serviceBus_connectionString')"
+        "connectionString": "@appsetting('serviceBusSend_connectionString')"
       },
       "serviceProvider": {
         "id": "/serviceProviders/serviceBus"

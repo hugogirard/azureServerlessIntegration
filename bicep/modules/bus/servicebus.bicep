@@ -25,3 +25,16 @@ resource sendRules 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2021-11-0
     ]
   }
 }
+
+resource listeRules 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2021-11-01' = {
+  name: 'listenAccess'
+  parent: serviceBusNamespace
+  properties: {
+    rights: [
+      'Listen'
+    ]
+  }
+}
+
+output sendRulesName string = sendRules.name
+output listenRulesName string = listeRules.name

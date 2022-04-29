@@ -56,9 +56,9 @@
                         }
                     },
                     "serviceProviderConfiguration": {
-                        "connectionName": "serviceBus",
+                        "connectionName": "serviceBusSend",
                         "operationId": "sendMessage",
-                        "serviceProviderId": "/serviceProviders/serviceBus"
+                        "serviceProviderId": "/serviceProviders/serviceBusSend"
                     }
                 },
                 "runAfter": {
