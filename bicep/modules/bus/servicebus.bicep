@@ -15,3 +15,13 @@ resource serviceBusQueue 'Microsoft.ServiceBus/namespaces/queues@2017-04-01' = {
   properties: {
   }
 }
+
+resource sendRules 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2021-11-01' = {
+  name: 'sendAccess'
+  parent: serviceBusNamespace
+  properties: {
+    rights: [
+      'Send'
+    ]
+  }
+}

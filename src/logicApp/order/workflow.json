@@ -1,0 +1,137 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Generate_Order_ID_": {
+                "type": "Compose",
+                "inputs": "@guid()",
+                "runAfter": {
+                    "Retrieve_customer": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Create_Order": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "order",
+                            "type": "object",
+                            "value": {
+                                "customerId": "@triggerBody()?['customerId']",
+                                "orderId": "@outputs('Generate_Order_ID_')",
+                                "status": "In Progress",
+                                "orderItems": "@triggerBody()?['orderItems']"
+                            }
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Generate_Order_ID_": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Response": {
+                "type": "Response",
+                "kind": "http",
+                "inputs": {
+                    "statusCode": 200,
+                    "body": "@variables('order')"
+                },
+                "runAfter": {
+                    "Send_message": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Send_message": {
+                "type": "ServiceProvider",
+                "inputs": {
+                    "parameters": {
+                        "entityName": "order",
+                        "message": {
+                            "contentData": "@variables('order')"
+                        }
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "serviceBus",
+                        "operationId": "sendMessage",
+                        "serviceProviderId": "/serviceProviders/serviceBus"
+                    }
+                },
+                "runAfter": {
+                    "Create_Order": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Retrieve_customer": {
+                "type": "ServiceProvider",
+                "inputs": {
+                    "parameters": {
+                        "databaseId": "contoso",
+                        "containerId": "customer",
+                        "itemId": "@triggerBody()?['customerId']",
+                        "partitionKey": "@triggerBody()?['customerId']"
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "AzureCosmosDB",
+                        "operationId": "ReadDocument",
+                        "serviceProviderId": "/serviceProviders/AzureCosmosDB"
+                    }
+                },
+                "runAfter": {}
+            }
+        },
+        "triggers": {
+            "manual": {
+                "type": "Request",
+                "kind": "Http",
+                "inputs": {
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "customerId": {
+                                "type": "string"
+                            },
+                            "orderId": {
+                                "type": "string"
+                            },
+                            "orderItems": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "quantity": {
+                                            "type": "integer"
+                                        },
+                                        "price": {
+                                            "type": "number"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "name",
+                                        "quantity",
+                                        "price",
+                                        "status"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {}
+    },
+    "kind": "Stateful"
+}
