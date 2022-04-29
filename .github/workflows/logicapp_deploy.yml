@@ -75,5 +75,5 @@ jobs:
       id: la
       with:
         app-name: ${{ env.RESOURCE_GROUP_NAME }}
-        package: './build-art/logic.zip'
+        package: './src/build-art/logic.zip'
         publish-profile: ${{steps.publishprofile.outputs.profile}}        
