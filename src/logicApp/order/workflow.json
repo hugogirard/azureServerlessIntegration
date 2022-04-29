@@ -46,27 +46,6 @@
                     ]
                 }
             },
-            "Send_message": {
-                "type": "ServiceProvider",
-                "inputs": {
-                    "parameters": {
-                        "entityName": "order",
-                        "message": {
-                            "contentData": "@variables('order')"
-                        }
-                    },
-                    "serviceProviderConfiguration": {
-                        "connectionName": "serviceBusSend",
-                        "operationId": "sendMessage",
-                        "serviceProviderId": "/serviceProviders/serviceBusSend"
-                    }
-                },
-                "runAfter": {
-                    "Create_Order": [
-                        "Succeeded"
-                    ]
-                }
-            },
             "Retrieve_customer": {
                 "type": "ServiceProvider",
                 "inputs": {
@@ -83,6 +62,27 @@
                     }
                 },
                 "runAfter": {}
+            },
+            "Send_message": {
+                "type": "ServiceProvider",
+                "inputs": {
+                    "parameters": {
+                        "entityName": "order",
+                        "message": {
+                            "contentData": "@variables('order')"
+                        }
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "serviceBus",
+                        "operationId": "sendMessage",
+                        "serviceProviderId": "/serviceProviders/serviceBus"
+                    }
+                },
+                "runAfter": {
+                    "Create_Order": [
+                        "Succeeded"
+                    ]
+                }
             }
         },
         "triggers": {

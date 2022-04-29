@@ -9,14 +9,14 @@
       },
       "displayName": "CosmosDB"
     },
-    "serviceBusSend": {
+    "serviceBus": {
       "parameterValues": {
-        "connectionString": "@appsetting('serviceBusSend_connectionString')"
+        "connectionString": "@appsetting('serviceBus_connectionString')"
       },
       "serviceProvider": {
         "id": "/serviceProviders/serviceBus"
       },
-      "displayName": "ServiceBusCnxString"
+      "displayName": "sendCnxString"
     }
   },
   "managedApiConnections": {}
