@@ -89,6 +89,8 @@ module logicApp 'modules/logicapp/logic.bicep' = {
     storageName: storage.outputs.strLogicName
     suffix: suffixIntegrationGuid
     cosmosDBName: cosmos.outputs.cosmosDBName
+    listenRulesName: bus.outputs.listenRulesName
+    sendRulesName: bus.outputs.sendRulesName
   }
 }
 
