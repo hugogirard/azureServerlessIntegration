@@ -99,7 +99,7 @@ resource logiapp 'Microsoft.Web/sites@2021-02-01' = {
         }
         {
           name: 'AzureCosmosDB_connectionString'
-          value: 'https://${cosmosDBName}.documents.azure.com:443/;AccountKey=${cosmos.listKeys().primaryMasterKey};'
+          value: 'AccountEndpoint=https://${cosmosDBName}.documents.azure.com:443/;AccountKey=${cosmos.listKeys().primaryMasterKey};'
         }
       ]
       use32BitWorkerProcess: true
