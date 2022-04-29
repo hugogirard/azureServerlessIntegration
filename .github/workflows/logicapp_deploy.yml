@@ -56,7 +56,7 @@ jobs:
     - uses: actions/download-artifact@master
       with:
         name: logic
-        path: ./build-art/
+        path: ./src/build-art
         
     - name: Get publish Profile
       id: publishprofile
