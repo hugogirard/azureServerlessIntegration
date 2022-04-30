@@ -1,23 +1,6 @@
 {
     "definition": {
         "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
-        "triggers": {
-            "When_messages_are_available_in_a_queue": {
-                "inputs": {
-                    "parameters": {
-                        "isSessionsEnabled": false,
-                        "queueName": "order"
-                    },
-                    "serviceProviderConfiguration": {
-                        "connectionName": "serviceBus",
-                        "operationId": "receiveQueueMessages",
-                        "serviceProviderId": "/serviceProviders/serviceBus"
-                    }
-                },
-                "splitOn": "@triggerOutputs()?['body']",
-                "type": "ServiceProvider"
-            }
-        },        
         "actions": {
             "Retrieve_order_from_CosmosDB": {
                 "type": "ServiceProvider",
@@ -92,17 +75,7 @@
                         }
                     ]
                 },
-                "actions": {
-                    "Response": {
-                        "type": "Response",
-                        "kind": "http",
-                        "inputs": {
-                            "statusCode": 404,
-                            "body": "Cannot find order @{body('Deserialize_msg_from_queue_to_order_type')?['orderId']} in the system"
-                        },
-                        "runAfter": {}
-                    }
-                },
+                "actions": {},
                 "runAfter": {
                     "Retrieve_order_from_CosmosDB": [
                         "Succeeded"
@@ -143,19 +116,6 @@
                                     "Succeeded"
                                 ]
                             }
-                        },
-                        "Updated_order": {
-                            "type": "Response",
-                            "kind": "http",
-                            "inputs": {
-                                "statusCode": 204,
-                                "body": "@body('Update_Order')?['content']"
-                            },
-                            "runAfter": {
-                                "Update_Order": [
-                                    "Succeeded"
-                                ]
-                            }
                         }
                     }
                 }
@@ -176,6 +136,23 @@
                         "Succeeded"
                     ]
                 }
+            }
+        },
+        "triggers": {
+            "When_messages_are_available_in_a_queue": {
+                "type": "ServiceProvider",
+                "inputs": {
+                    "parameters": {
+                        "queueName": "order",
+                        "isSessionsEnabled": false
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "serviceBus",
+                        "operationId": "receiveQueueMessages",
+                        "serviceProviderId": "/serviceProviders/serviceBus"
+                    }
+                },
+                "splitOn": "@triggerOutputs()?['body']"
             }
         },
         "contentVersion": "1.0.0.0",
