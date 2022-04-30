@@ -15,8 +15,8 @@
                                     "parameters": {
                                         "databaseId": "contoso",
                                         "containerId": "customer",
-                                        "item": "{\n   \"id\": @{guid()},\n   \"firstname\": @{triggerBody()?['payload']?['firstname']},\n   \"lastname\": @{triggerBody()?['payload']?['lastname']},\n   \"address\":  {\n       \"country\": @{triggerBody()?['payload']?['address']?['country']},\n       \"stateOrProvince\": @{triggerBody()?['payload']?['address']?['stateOrProvince']},\n       \"civicNumber\": @{triggerBody()?['payload']?['address']?['civicNumber']},\n       \"streetName\": @{triggerBody()?['payload']?['address']?['streetName']},\n       \"postalCodeOrZipCode\": @{triggerBody()?['payload']?['address']?['postalCodeOrZipCode']}\n    }\n}",
-                                        "partitionKey": "@triggerBody()?['payload']?['id']",
+                                        "item": "{\n   \"id\": @{variables('customerId')},\n   \"firstname\": @{triggerBody()?['payload']?['firstname']},\n   \"lastname\": @{triggerBody()?['payload']?['lastname']},\n   \"address\":  {\n       \"country\": @{triggerBody()?['payload']?['address']?['country']},\n       \"stateOrProvince\": @{triggerBody()?['payload']?['address']?['stateOrProvince']},\n       \"civicNumber\": @{triggerBody()?['payload']?['address']?['civicNumber']},\n       \"streetName\": @{triggerBody()?['payload']?['address']?['streetName']},\n       \"postalCodeOrZipCode\": @{triggerBody()?['payload']?['address']?['postalCodeOrZipCode']}\n    }\n}",
+                                        "partitionKey": "@variables('customerId')",
                                         "isUpsert": true
                                     },
                                     "serviceProviderConfiguration": {
@@ -124,6 +124,23 @@
                             "runAfter": {}
                         }
                     }
+                },
+                "runAfter": {
+                    "Initialize_variable_customerId": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Initialize_variable_customerId": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "customerId",
+                            "type": "string",
+                            "value": "@{guid()}"
+                        }
+                    ]
                 },
                 "runAfter": {}
             }
