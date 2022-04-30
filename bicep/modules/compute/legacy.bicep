@@ -66,9 +66,9 @@ resource legacyVm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
         deleteOption: 'Delete'
       }
       imageReference: {
-        publisher: 'microsoftsqlserver'
-        offer: 'sql2019-ws2022'
-        sku: 'sqldev'
+        publisher: 'MicrosoftWindowsServer'
+        offer: 'WindowsServer'
+        sku: '2022-datacenter-azure-edition'
         version: 'latest'
       }
     }  
@@ -98,29 +98,6 @@ resource legacyVm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
     diagnosticsProfile: {
       bootDiagnostics: {
         enabled: true
-      }
-    }
-  }
-}
-
-resource sql 'Microsoft.SqlVirtualMachine/sqlVirtualMachines@2021-11-01-preview' = {
-  name: 'nic-legacy-${suffix}'
-  location: location
-  properties: {
-    virtualMachineResourceId: legacyVm.id
-    sqlManagement: 'Full'
-    autoPatchingSettings: {
-      enable: true
-      dayOfWeek: 'Sunday'
-      maintenanceWindowStartingHour: 2
-      maintenanceWindowDuration: 60
-    }
-    serverConfigurationsManagementSettings: {
-      sqlConnectivityUpdateSettings: {
-        connectivityType: 'PRIVATE'
-        port: 1433
-        sqlAuthUpdateUserName: adminUsername
-        sqlAuthUpdatePassword: adminPassword
       }
     }
   }
