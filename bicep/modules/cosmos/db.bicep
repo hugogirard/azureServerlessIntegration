@@ -59,7 +59,7 @@ resource orderContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/cont
     options: {
     }
     resource: {
-      id: 'orderId'
+      id: 'order'
       partitionKey: {
         paths: [
           '/orderId'
