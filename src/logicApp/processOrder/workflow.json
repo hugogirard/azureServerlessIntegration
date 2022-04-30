@@ -1,6 +1,23 @@
 {
     "definition": {
         "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "triggers": {
+            "When_messages_are_available_in_a_queue": {
+                "inputs": {
+                    "parameters": {
+                        "isSessionsEnabled": false,
+                        "queueName": "order"
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "serviceBus",
+                        "operationId": "receiveQueueMessages",
+                        "serviceProviderId": "/serviceProviders/serviceBus"
+                    }
+                },
+                "splitOn": "@triggerOutputs()?['body']",
+                "type": "ServiceProvider"
+            }
+        },        
         "actions": {
             "Retrieve_order_from_CosmosDB": {
                 "type": "ServiceProvider",
@@ -159,23 +176,6 @@
                         "Succeeded"
                     ]
                 }
-            }
-        },
-        "triggers": {
-            "When_an_order_is_ready_to_process_in_order_queue": {
-                "type": "ServiceProvider",
-                "inputs": {
-                    "parameters": {
-                        "queueName": "order",
-                        "isSessionsEnabled": false
-                    },
-                    "serviceProviderConfiguration": {
-                        "connectionName": "serviceBus",
-                        "operationId": "receiveQueueMessages",
-                        "serviceProviderId": "/serviceProviders/serviceBus"
-                    }
-                },
-                "splitOn": "@triggerOutputs()?['body']"
             }
         },
         "contentVersion": "1.0.0.0",
