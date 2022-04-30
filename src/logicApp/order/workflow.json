@@ -66,7 +66,7 @@
                                 "body": "@variables('order')"
                             },
                             "runAfter": {
-                                "Send_message": [
+                                "Create_order": [
                                     "Succeeded"
                                 ]
                             }
@@ -75,7 +75,7 @@
                             "type": "SetVariable",
                             "inputs": {
                                 "name": "order",
-                                "value":  {
+                                "value": {
                                     "customerId": "@triggerBody()?['customerId']",
                                     "orderId": "@outputs('Generate_Order_ID_')",
                                     "status": "In Progress",
@@ -105,6 +105,27 @@
                             },
                             "runAfter": {
                                 "Set_variable_order": [
+                                    "Succeeded"
+                                ]
+                            }
+                        },
+                        "Create_order": {
+                            "type": "ServiceProvider",
+                            "inputs": {
+                                "parameters": {
+                                    "databaseId": "contoso",
+                                    "containerId": "order",
+                                    "item": "@variables('order')",
+                                    "isUpsert": true
+                                },
+                                "serviceProviderConfiguration": {
+                                    "connectionName": "AzureCosmosDB",
+                                    "operationId": "CreateOrUpdateDocument",
+                                    "serviceProviderId": "/serviceProviders/AzureCosmosDB"
+                                }
+                            },
+                            "runAfter": {
+                                "Send_message": [
                                     "Succeeded"
                                 ]
                             }
