@@ -2,50 +2,6 @@
     "definition": {
         "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
         "actions": {
-            "Generate_Order_ID_": {
-                "type": "Compose",
-                "inputs": "@guid()",
-                "runAfter": {
-                    "Retrieve_customer": [
-                        "Succeeded"
-                    ]
-                }
-            },
-            "Create_Order": {
-                "type": "InitializeVariable",
-                "inputs": {
-                    "variables": [
-                        {
-                            "name": "order",
-                            "type": "object",
-                            "value": {
-                                "customerId": "@triggerBody()?['customerId']",
-                                "orderId": "@outputs('Generate_Order_ID_')",
-                                "status": "In Progress",
-                                "orderItems": "@triggerBody()?['orderItems']"
-                            }
-                        }
-                    ]
-                },
-                "runAfter": {
-                    "Generate_Order_ID_": [
-                        "Succeeded"
-                    ]
-                }
-            },
-            "Response": {
-                "type": "Response",
-                "kind": "http",
-                "inputs": {
-                    "statusCode": 200,
-                    "body": "@variables('order')"
-                },
-                "runAfter": {
-                    "Send_message": [
-                        "Succeeded"
-                    ]
-                }
-            },
             "Retrieve_customer": {
                 "type": "ServiceProvider",
                 "inputs": {
@@ -61,28 +17,112 @@
                         "serviceProviderId": "/serviceProviders/AzureCosmosDB"
                     }
                 },
-                "runAfter": {}
-            },
-            "Send_message": {
-                "type": "ServiceProvider",
-                "inputs": {
-                    "parameters": {
-                        "entityName": "order",
-                        "message": {
-                            "contentData": "@variables('order')"
-                        }
-                    },
-                    "serviceProviderConfiguration": {
-                        "connectionName": "serviceBus",
-                        "operationId": "sendMessage",
-                        "serviceProviderId": "/serviceProviders/serviceBus"
-                    }
-                },
                 "runAfter": {
-                    "Create_Order": [
+                    "Initialize_variable_order": [
                         "Succeeded"
                     ]
                 }
+            },
+            "Validate_if_customer_exists": {
+                "type": "If",
+                "expression": {
+                    "and": [
+                        {
+                            "equals": [
+                                "@outputs('Retrieve_customer')?['statusCode']",
+                                404
+                            ]
+                        }
+                    ]
+                },
+                "actions": {
+                    "Send_customer_not_found": {
+                        "type": "Response",
+                        "kind": "http",
+                        "inputs": {
+                            "statusCode": 404,
+                            "body": "Customer @{triggerBody()?['customerId']} is not found"
+                        },
+                        "runAfter": {}
+                    }
+                },
+                "runAfter": {
+                    "Retrieve_customer": [
+                        "Succeeded"
+                    ]
+                },
+                "else": {
+                    "actions": {
+                        "Generate_Order_ID_": {
+                            "type": "Compose",
+                            "inputs": "@guid()",
+                            "runAfter": {}
+                        },
+                        "Response": {
+                            "type": "Response",
+                            "kind": "http",
+                            "inputs": {
+                                "statusCode": 200,
+                                "body": "@variables('order')"
+                            },
+                            "runAfter": {
+                                "Send_message": [
+                                    "Succeeded"
+                                ]
+                            }
+                        },
+                        "Set_variable_order": {
+                            "type": "SetVariable",
+                            "inputs": {
+                                "name": "order",
+                                "value":  {
+                                    "customerId": "@triggerBody()?['customerId']",
+                                    "orderId": "@outputs('Generate_Order_ID_')",
+                                    "status": "In Progress",
+                                    "orderItems": "@triggerBody()?['orderItems']"
+                                }
+                            },
+                            "runAfter": {
+                                "Generate_Order_ID_": [
+                                    "Succeeded"
+                                ]
+                            }
+                        },
+                        "Send_message": {
+                            "type": "ServiceProvider",
+                            "inputs": {
+                                "parameters": {
+                                    "entityName": "order",
+                                    "message": {
+                                        "contentData": "@variables('order')"
+                                    }
+                                },
+                                "serviceProviderConfiguration": {
+                                    "connectionName": "serviceBus",
+                                    "operationId": "sendMessage",
+                                    "serviceProviderId": "/serviceProviders/serviceBus"
+                                }
+                            },
+                            "runAfter": {
+                                "Set_variable_order": [
+                                    "Succeeded"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "Initialize_variable_order": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "order",
+                            "type": "object"
+                        }
+                    ]
+                },
+                "runAfter": {}
             }
         },
         "triggers": {
