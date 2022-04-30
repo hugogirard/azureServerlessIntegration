@@ -15,7 +15,7 @@
                                     "parameters": {
                                         "databaseId": "contoso",
                                         "containerId": "customer",
-                                        "item": "{\n   \"id\": @{variables('customerId')},\n   \"firstname\": @{triggerBody()?['payload']?['firstname']},\n   \"lastname\": @{triggerBody()?['payload']?['lastname']},\n   \"address\":  {\n       \"country\": @{triggerBody()?['payload']?['address']?['country']},\n       \"stateOrProvince\": @{triggerBody()?['payload']?['address']?['stateOrProvince']},\n       \"civicNumber\": @{triggerBody()?['payload']?['address']?['civicNumber']},\n       \"streetName\": @{triggerBody()?['payload']?['address']?['streetName']},\n       \"postalCodeOrZipCode\": @{triggerBody()?['payload']?['address']?['postalCodeOrZipCode']}\n    }\n}",
+                                        "item": "@variables('customer')",
                                         "partitionKey": "@variables('customerId')",
                                         "isUpsert": true
                                     },
@@ -25,7 +25,11 @@
                                         "serviceProviderId": "/serviceProviders/AzureCosmosDB"
                                     }
                                 },
-                                "runAfter": {}
+                                "runAfter": {
+                                    "Set_Variable_Customer_": [
+                                        "Succeeded"
+                                    ]
+                                }
                             },
                             "Create_Update_Response": {
                                 "type": "Response",
@@ -39,6 +43,19 @@
                                         "Succeeded"
                                     ]
                                 }
+                            },
+                            "Set_Variable_Customer_": {
+                                "type": "SetVariable",
+                                "inputs": {
+                                    "name": "customer",
+                                    "value": {
+                                        "id": "@variables('customerId')",
+                                        "firstname": "@triggerBody()?['payload']?['firstname']",
+                                        "lastname": "@triggerBody()?['payload']?['lastname']",
+                                        "address": "@triggerBody()?['payload']?['address']"
+                                    }
+                                },
+                                "runAfter": {}
                             }
                         }
                     },
@@ -126,7 +143,7 @@
                     }
                 },
                 "runAfter": {
-                    "Initialize_variable_customerId": [
+                    "Initialize_Variable_customer": [
                         "Succeeded"
                     ]
                 }
@@ -143,6 +160,23 @@
                     ]
                 },
                 "runAfter": {}
+            },
+            "Initialize_Variable_customer": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "customer",
+                            "type": "object",
+                            "value": {}
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable_customerId": [
+                        "Succeeded"
+                    ]
+                }
             }
         },
         "triggers": {
