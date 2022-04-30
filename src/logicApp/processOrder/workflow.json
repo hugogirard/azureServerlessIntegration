@@ -1,0 +1,185 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Retrieve_order_from_CosmosDB": {
+                "type": "ServiceProvider",
+                "inputs": {
+                    "parameters": {
+                        "databaseId": "contoso",
+                        "containerId": "order",
+                        "itemId": "@body('Deserialize_msg_from_queue_to_order_type')?['orderId']",
+                        "partitionKey": "@body('Deserialize_msg_from_queue_to_order_type')?['orderId']"
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "AzureCosmosDB",
+                        "operationId": "ReadDocument",
+                        "serviceProviderId": "/serviceProviders/AzureCosmosDB"
+                    }
+                },
+                "runAfter": {
+                    "Initialize_variable_order": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Deserialize_msg_from_queue_to_order_type": {
+                "type": "ParseJson",
+                "inputs": {
+                    "content": "@triggerOutputs()?['body']?['contentData']",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "customerId": {
+                                "type": "string"
+                            },
+                            "orderId": {
+                                "type": "string"
+                            },
+                            "orderItems": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "quantity": {
+                                            "type": "integer"
+                                        },
+                                        "price": {
+                                            "type": "number"
+                                        }
+                                    },
+                                    "required": [
+                                        "name",
+                                        "quantity",
+                                        "price"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "runAfter": {}
+            },
+            "Evaluate_if_order_not_found": {
+                "type": "If",
+                "expression": {
+                    "and": [
+                        {
+                            "equals": [
+                                "@outputs('Retrieve_order_from_CosmosDB')?['statusCode']",
+                                404
+                            ]
+                        }
+                    ]
+                },
+                "actions": {
+                    "Response": {
+                        "type": "Response",
+                        "kind": "http",
+                        "inputs": {
+                            "statusCode": 404,
+                            "body": "Cannot find order @{body('Deserialize_msg_from_queue_to_order_type')?['orderId']} in the system"
+                        },
+                        "runAfter": {}
+                    }
+                },
+                "runAfter": {
+                    "Retrieve_order_from_CosmosDB": [
+                        "Succeeded"
+                    ]
+                },
+                "else": {
+                    "actions": {
+                        "Set_variable": {
+                            "type": "SetVariable",
+                            "inputs": {
+                                "name": "order",
+                                "value": {
+                                    "customerId": "@body('Deserialize_msg_from_queue_to_order_type')?['customerId']",
+                                    "orderId": "@body('Deserialize_msg_from_queue_to_order_type')?['orderId']",
+                                    "status": "Completed",
+                                    "orderItems": "@body('Deserialize_msg_from_queue_to_order_type')?['orderItems']"
+                                }
+                            },
+                            "runAfter": {}
+                        },
+                        "Update_Order": {
+                            "type": "ServiceProvider",
+                            "inputs": {
+                                "parameters": {
+                                    "databaseId": "contoso",
+                                    "containerId": "order",
+                                    "item": "@variables('order')",
+                                    "isUpsert": true
+                                },
+                                "serviceProviderConfiguration": {
+                                    "connectionName": "AzureCosmosDB",
+                                    "operationId": "CreateOrUpdateDocument",
+                                    "serviceProviderId": "/serviceProviders/AzureCosmosDB"
+                                }
+                            },
+                            "runAfter": {
+                                "Set_variable": [
+                                    "Succeeded"
+                                ]
+                            }
+                        },
+                        "Updated_order": {
+                            "type": "Response",
+                            "kind": "http",
+                            "inputs": {
+                                "statusCode": 204,
+                                "body": "@body('Update_Order')?['content']"
+                            },
+                            "runAfter": {
+                                "Update_Order": [
+                                    "Succeeded"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "Initialize_variable_order": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "order",
+                            "type": "object",
+                            "value": {}
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Deserialize_msg_from_queue_to_order_type": [
+                        "Succeeded"
+                    ]
+                }
+            }
+        },
+        "triggers": {
+            "When_an_order_is_ready_to_process_in_order_queue": {
+                "type": "ServiceProvider",
+                "inputs": {
+                    "parameters": {
+                        "queueName": "order",
+                        "isSessionsEnabled": false
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "serviceBus",
+                        "operationId": "receiveQueueMessages",
+                        "serviceProviderId": "/serviceProviders/serviceBus"
+                    }
+                },
+                "splitOn": "@triggerOutputs()?['body']"
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {}
+    },
+    "kind": "Stateful"
+}
