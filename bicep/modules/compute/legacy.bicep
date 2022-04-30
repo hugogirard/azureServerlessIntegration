@@ -10,7 +10,7 @@ param adminUsername string
 @secure()
 param adminPassword string
 
-var vmName = 'legacy-${suffix}'
+var vmName = 'legacyvm'
 
 var dataDiskResources = {
   values: [
