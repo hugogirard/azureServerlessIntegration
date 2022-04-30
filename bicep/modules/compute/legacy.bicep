@@ -12,31 +12,6 @@ param adminPassword string
 
 var vmName = 'legacyvm'
 
-var dataDiskResources = {
-  values: [
-    {
-      name: 'legacySystem_DataDisk_0'
-      sku: 'Premium_LRS'
-      properties: {
-          diskSizeGB: 1024
-          creationData: {
-              createOption: 'empty'
-          }
-      }      
-    }
-    {
-      name: 'legacySystem_DataDisk_1'
-      sku: 'Premium_LRS'
-      properties: {
-          diskSizeGB: 1024
-          creationData: {
-              createOption: 'empty'
-          }
-      }      
-    }    
-  ]
-}
-
 resource pip 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
   name: 'pip-legacy-${suffix}'
   location: location

@@ -59,8 +59,8 @@ module legacyServer 'modules/compute/legacy.bicep' = {
   scope: resourceGroup(rgOnPremise.name)
   name: 'legacyserver'
   params: {
-    adminPassword: adminUsername
-    adminUsername: adminPassword
+    adminPassword: adminPassword
+    adminUsername: adminUsername
     location: location
     subnetId: vnetOnPremise.outputs.subnetId
     suffix: suffixPremiseGuid
