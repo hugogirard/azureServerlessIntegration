@@ -12,6 +12,31 @@ param adminPassword string
 
 var vmName = 'legacy-${suffix}'
 
+var dataDiskResources = {
+  values: [
+    {
+      name: 'legacySystem_DataDisk_0'
+      sku: 'Premium_LRS'
+      properties: {
+          diskSizeGB: 1024
+          creationData: {
+              createOption: 'empty'
+          }
+      }      
+    }
+    {
+      name: 'legacySystem_DataDisk_1'
+      sku: 'Premium_LRS'
+      properties: {
+          diskSizeGB: 1024
+          creationData: {
+              createOption: 'empty'
+          }
+      }      
+    }    
+  ]
+}
+
 resource pip 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
   name: 'pip-legacy-${suffix}'
   location: location
@@ -25,6 +50,7 @@ resource pip 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
 
 resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
   name: 'nic-legacy-${suffix}'
+  location: location
   properties: {
     ipConfigurations: [
       {
@@ -45,6 +71,8 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
     ]
   }
 }
+
+
 
 
 resource legacyVm 'Microsoft.Compute/virtualMachines@2021-11-01' = {

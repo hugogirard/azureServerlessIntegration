@@ -41,5 +41,6 @@ resource containerDocumentUpload 'Microsoft.Storage/storageAccounts/blobServices
 }
 
 output strLogicName string = storageAccountApp.name
+output strFileName string = storageUploadLargeFile.name
 
 

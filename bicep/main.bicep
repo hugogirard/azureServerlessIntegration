@@ -76,6 +76,15 @@ module dataFactory 'modules/dataFactory/factory.bicep' = {
   }
 }
 
+// module pipeline 'modules/dataFactory/pipeline/copyToBlob.bicep' = {
+//   scope: resourceGroup(rgIntegration.name)
+//   name: 'pipeline'
+//   params: {
+//     azureFactoryName: dataFactory.outputs.dataFactoryName
+//     storageSouceCnxString: storage.outputs.
+//   }
+// }
+
 module monitoring 'modules/monitoring/insight.bicep' = {
   scope: resourceGroup(rgIntegration.name)
   name: 'monitoring'
