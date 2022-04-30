@@ -20,6 +20,7 @@ var hubRgName = 'rg-integration-hub'
 var premiseRgName = 'rg-premise-contoso'
 
 var suffixIntegrationGuid = uniqueString(rgIntegration.id)
+var suffixPremiseGuid = uniqueString(rgOnPremise.id)
 
 resource rgIntegration 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   name: integrateRgName
@@ -51,6 +52,18 @@ module vnetOnPremise 'modules/networking/vnet.onpremise.bicep' = {
   name: 'vnetOnPremise'
   params: {
     location: location
+  }
+}
+
+module legacyServer 'modules/compute/legacy.bicep' = {
+  scope: resourceGroup(rgOnPremise.name)
+  name: 'legacyserver'
+  params: {
+    adminPassword: adminUsername
+    adminUsername: adminPassword
+    location: location
+    subnetId: vnetOnPremise.outputs.subnetId
+    suffix: suffixPremiseGuid
   }
 }
 
