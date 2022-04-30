@@ -15,7 +15,7 @@
                                     "parameters": {
                                         "databaseId": "contoso",
                                         "containerId": "customer",
-                                        "item": "@body('Parse_JSON_Payload_HTTP_Request')",
+                                        "item": "{\n   \"id\": @{guid()},\n   \"firstname\": @{triggerBody()?['payload']?['firstname']},\n   \"lastname\": @{triggerBody()?['payload']?['lastname']},\n   \"address\":  {\n       \"country\": @{triggerBody()?['payload']?['address']?['country']},\n       \"stateOrProvince\": @{triggerBody()?['payload']?['address']?['stateOrProvince']},\n       \"civicNumber\": @{triggerBody()?['payload']?['address']?['civicNumber']},\n       \"streetName\": @{triggerBody()?['payload']?['address']?['streetName']},\n       \"postalCodeOrZipCode\": @{triggerBody()?['payload']?['address']?['postalCodeOrZipCode']}\n    }\n}",
                                         "partitionKey": "@triggerBody()?['payload']?['id']",
                                         "isUpsert": true
                                     },
@@ -43,7 +43,7 @@
                         }
                     },
                     "GET_CUSTOMERS": {
-                        "case": "get",
+                        "case": "all",
                         "actions": {
                             "Select_customer": {
                                 "type": "ServiceProvider",
@@ -75,6 +75,41 @@
                                 }
                             }
                         }
+                    },
+                    "Get_Customer": {
+                        "case": "get",
+                        "actions": {
+                            "Retrieve_Customer": {
+                                "type": "ServiceProvider",
+                                "inputs": {
+                                    "parameters": {
+                                        "databaseId": "contoso",
+                                        "containerId": "customer",
+                                        "itemId": "@triggerBody()?['payload']?['id']",
+                                        "partitionKey": "@triggerBody()?['payload']?['id']"
+                                    },
+                                    "serviceProviderConfiguration": {
+                                        "connectionName": "AzureCosmosDB",
+                                        "operationId": "ReadDocument",
+                                        "serviceProviderId": "/serviceProviders/AzureCosmosDB"
+                                    }
+                                },
+                                "runAfter": {}
+                            },
+                            "Response_Customer": {
+                                "type": "Response",
+                                "kind": "http",
+                                "inputs": {
+                                    "statusCode": 200,
+                                    "body": "@body('Retrieve_Customer')?['content']"
+                                },
+                                "runAfter": {
+                                    "Retrieve_Customer": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            }
+                        }
                     }
                 },
                 "default": {
@@ -87,29 +122,6 @@
                                 "body": "Invalid Operation"
                             },
                             "runAfter": {}
-                        }
-                    }
-                },
-                "runAfter": {
-                    "Parse_JSON_Payload_HTTP_Request": [
-                        "Succeeded"
-                    ]
-                }
-            },
-            "Parse_JSON_Payload_HTTP_Request": {
-                "type": "ParseJson",
-                "inputs": {
-                    "content": "@triggerBody()?['payload']",
-                    "schema": {
-                        "id": "10",
-                        "firstname": "hugo",
-                        "lastname": "girard",
-                        "address": {
-                            "country": "canada",
-                            "stateOrProvince": "quebec",
-                            "cividNumber": "555",
-                            "streetName": "2020 du finfin",
-                            "postalCodeOrZipCode": "J7J7J7"
                         }
                     }
                 },
@@ -148,7 +160,7 @@
                                             "stateOrProvince": {
                                                 "type": "string"
                                             },
-                                            "cividNumber": {
+                                            "civicNumber": {
                                                 "type": "string"
                                             },
                                             "streetName": {
