@@ -116,6 +116,7 @@
                                     "databaseId": "contoso",
                                     "containerId": "order",
                                     "item": "@variables('order')",
+                                    "partitionKey": "@outputs('Generate_Order_ID_')",
                                     "isUpsert": true
                                 },
                                 "serviceProviderConfiguration": {
