@@ -16,7 +16,7 @@ resource pip 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
   name: 'pip-legacy-${suffix}'
   location: location
   properties: {
-    publicIPAllocationMethod: 'Dynamic'
+    publicIPAllocationMethod: 'Static'
   }
   sku: {
     name: 'Standard'
