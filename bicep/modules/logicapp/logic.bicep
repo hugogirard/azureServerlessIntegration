@@ -108,7 +108,8 @@ resource logiapp 'Microsoft.Web/sites@2021-02-01' = {
         }
         {
           name: 'serviceBusSend_connectionString'
-          value: serviceBusRule.listKeys().primaryConnectionString
+          value: listKeys(serviceBusRule.id,serviceBusRule.apiVersion).primaryConnectionString
+          //serviceBusRule.listKeys().primaryConnectionString
         }
       ]
       use32BitWorkerProcess: true
