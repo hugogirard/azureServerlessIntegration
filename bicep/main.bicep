@@ -27,10 +27,10 @@ resource rgIntegration 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   location: location
 }
 
-resource rgHub 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: hubRgName
-  location: location
-}
+// resource rgHub 'Microsoft.Resources/resourceGroups@2021-04-01' = {
+//   name: hubRgName
+//   location: location
+// }
 
 resource rgOnPremise 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   name: premiseRgName
@@ -52,6 +52,24 @@ module vnetOnPremise 'modules/networking/vnet.onpremise.bicep' = {
   name: 'vnetOnPremise'
   params: {
     location: location
+  }
+}
+
+module peeringIntegrationToPremise 'modules/networking/peering.bicep' = {
+  scope: resourceGroup(rgIntegration.name)
+  name: 'peeringIntegrationToPremise'
+  params: {
+    peeringName: '${vnetIntegration.outputs.name}/integration-to-premise'    
+    remoteVnetId: vnetOnPremise.outputs.id
+  }
+}
+
+module peeringPremiseToIntegration 'modules/networking/peering.bicep' = {
+  scope: resourceGroup(rgOnPremise.name)
+  name: 'peeringPremiseToIntegration'
+  params: {
+    peeringName: '${vnetOnPremise.outputs.name}/premise-to-integration'    
+    remoteVnetId: vnetIntegration.outputs.id
   }
 }
 
