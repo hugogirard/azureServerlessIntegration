@@ -18,23 +18,19 @@
                 },
                 "runAfter": {}
             },
-            "For_each": {
-                "type": "Foreach",
-                "foreach": "@body('Retrieve_all_processed_order')?['items']",
-                "actions": {
-                    "HTTP": {
-                        "type": "Http",
-                        "inputs": {
-                            "method": "POST",
-                            "uri": "@appsetting('endpointApiLegacy')",
-                            "headers": {
-                                "Content-Type": "application/json"
-                            },
-                            "body": "@items('For_each')"
-                        },
-                        "runAfter": {}
-                    }
+            "Validate_if_orders_found": {
+                "type": "If",
+                "expression": {
+                    "and": [
+                        {
+                            "greater": [
+                                "@body('Retrieve_all_processed_order')?['count']",
+                                0
+                            ]
+                        }
+                    ]
                 },
+                "actions": {},
                 "runAfter": {
                     "Retrieve_all_processed_order": [
                         "Succeeded"
@@ -46,8 +42,8 @@
             "Recurrence": {
                 "type": "Recurrence",
                 "recurrence": {
-                    "frequency": "Hour",
-                    "interval": 1
+                    "frequency": "Second",
+                    "interval": 20
                 }
             }
         },
