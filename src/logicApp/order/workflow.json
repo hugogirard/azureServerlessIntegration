@@ -76,8 +76,8 @@
                             "inputs": {
                                 "name": "order",
                                 "value": {
+                                    "id": "@outputs('Generate_Order_ID_')",
                                     "customerId": "@triggerBody()?['customerId']",
-                                    "orderId": "@outputs('Generate_Order_ID_')",
                                     "status": "In Progress",
                                     "orderItems": "@triggerBody()?['orderItems']"
                                 }
