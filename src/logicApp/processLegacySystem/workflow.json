@@ -30,7 +30,126 @@
                         }
                     ]
                 },
-                "actions": {},
+                "actions": {
+                    "Save_Orders_in_legacy_system": {
+                        "type": "Http",
+                        "inputs": {
+                            "method": "POST",
+                            "uri": "@appsetting('legacy_URL')",
+                            "headers": {
+                                "Content-Type": "application/json",
+                                "Ocp-Apim-Subscription-Key": "@appsetting('APIM_subscriptionKey')"
+                            },
+                            "body": "@body('Retrieve_all_processed_order')?['items']"
+                        },
+                        "runAfter": {}
+                    },
+                    "If_POST_legacy_is_success": {
+                        "type": "If",
+                        "expression": {
+                            "and": [
+                                {
+                                    "equals": [
+                                        "",
+                                        200
+                                    ]
+                                }
+                            ]
+                        },
+                        "actions": {
+                            "For_each_order": {
+                                "type": "Foreach",
+                                "foreach": "@body('Retrieve_all_processed_order')?['items']",
+                                "actions": {
+                                    "Parse_JSON_CosmosDB_Item": {
+                                        "type": "ParseJson",
+                                        "inputs": {
+                                            "content": "@item()",
+                                            "schema": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "customerId": {
+                                                        "type": "string"
+                                                    },
+                                                    "status": {
+                                                        "type": "string"
+                                                    },
+                                                    "orderItems": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "name": {
+                                                                    "type": "string"
+                                                                },
+                                                                "quantity": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "price": {
+                                                                    "type": "number"
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "name",
+                                                                "quantity",
+                                                                "price"
+                                                            ]
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "runAfter": {}
+                                    },
+                                    "Set_variable_customer": {
+                                        "type": "SetVariable",
+                                        "inputs": {
+                                            "name": "order",
+                                            "value": {
+                                                "id": "@body('Parse_JSON_CosmosDB_Item')?['id']",
+                                                "customerId": "@body('Parse_JSON_CosmosDB_Item')?['customerId']",
+                                                "status": "@body('Parse_JSON_CosmosDB_Item')?['status']",
+                                                "sendToLegacySystem": true,
+                                                "orderItems": "@body('Parse_JSON_CosmosDB_Item')?['orderItems']"
+                                            }
+                                        },
+                                        "runAfter": {
+                                            "Parse_JSON_CosmosDB_Item": [
+                                                "Succeeded"
+                                            ]
+                                        }
+                                    }
+                                },
+                                "runAfter": {}
+                            }
+                        },
+                        "runAfter": {
+                            "Save_Orders_in_legacy_system": [
+                                "Succeeded"
+                            ]
+                        }
+                    }
+                },
+                "runAfter": {
+                    "Initialize_variable": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Initialize_variable": {
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "order",
+                            "type": "object",
+                            "value": {}
+                        }
+                    ]
+                },
                 "runAfter": {
                     "Retrieve_all_processed_order": [
                         "Succeeded"
@@ -42,8 +161,8 @@
             "Recurrence": {
                 "type": "Recurrence",
                 "recurrence": {
-                    "frequency": "Second",
-                    "interval": 20
+                    "frequency": "Hour",
+                    "interval": 1
                 }
             }
         },
