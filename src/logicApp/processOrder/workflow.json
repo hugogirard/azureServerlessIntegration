@@ -8,8 +8,8 @@
                     "parameters": {
                         "databaseId": "contoso",
                         "containerId": "order",
-                        "itemId": "@body('Deserialize_msg_from_queue_to_order_type')?['orderId']",
-                        "partitionKey": "@body('Deserialize_msg_from_queue_to_order_type')?['orderId']"
+                        "itemId": "@body('Deserialize_msg_from_queue_to_order_type')?['id']",
+                        "partitionKey": "@body('Deserialize_msg_from_queue_to_order_type')?['id']"
                     },
                     "serviceProviderConfiguration": {
                         "connectionName": "AzureCosmosDB",
@@ -88,7 +88,7 @@
                             "inputs": {
                                 "name": "order",
                                 "value": {
-                                    "customerId": "@body('Deserialize_msg_from_queue_to_order_type')?['customerId']",
+                                    "id": "@body('Deserialize_msg_from_queue_to_order_type')?['id']",
                                     "orderId": "@body('Deserialize_msg_from_queue_to_order_type')?['orderId']",
                                     "status": "Completed",
                                     "orderItems": "@body('Deserialize_msg_from_queue_to_order_type')?['orderItems']"
@@ -103,6 +103,7 @@
                                     "databaseId": "contoso",
                                     "containerId": "order",
                                     "item": "@variables('order')",
+                                    "partitionKey": "@body('Deserialize_msg_from_queue_to_order_type')?['id']",
                                     "isUpsert": true
                                 },
                                 "serviceProviderConfiguration": {

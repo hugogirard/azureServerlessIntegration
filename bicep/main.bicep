@@ -55,17 +55,17 @@ module vnetOnPremise 'modules/networking/vnet.onpremise.bicep' = {
   }
 }
 
-// module legacyServer 'modules/compute/legacy.bicep' = {
-//   scope: resourceGroup(rgOnPremise.name)
-//   name: 'legacyserver'
-//   params: {
-//     adminPassword: adminPassword
-//     adminUsername: adminUsername
-//     location: location
-//     subnetId: vnetOnPremise.outputs.subnetId
-//     suffix: suffixPremiseGuid
-//   }
-// }
+module legacyServer 'modules/compute/legacy.bicep' = {
+  scope: resourceGroup(rgOnPremise.name)
+  name: 'legacyserver'
+  params: {
+    adminPassword: adminPassword
+    adminUsername: adminUsername
+    location: location
+    subnetId: vnetOnPremise.outputs.subnetId
+    suffix: suffixPremiseGuid
+  }
+}
 
 module dataFactory 'modules/dataFactory/factory.bicep' = {
   scope: resourceGroup(rgIntegration.name)

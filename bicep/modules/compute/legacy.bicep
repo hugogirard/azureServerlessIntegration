@@ -86,14 +86,6 @@ resource legacyVm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       computerName: vmName
       adminUsername: adminUsername
       adminPassword: adminPassword
-      windowsConfiguration: {
-        enableAutomaticUpdates: true
-        provisionVMAgent: true
-        patchSettings: {
-          enableHotpatching: true
-          patchMode: 'AutomaticByOS'
-        }
-      }
     }
     diagnosticsProfile: {
       bootDiagnostics: {
