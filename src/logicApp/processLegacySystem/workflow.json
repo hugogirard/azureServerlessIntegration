@@ -1,0 +1,58 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Retrieve_all_processed_order": {
+                "type": "ServiceProvider",
+                "inputs": {
+                    "parameters": {
+                        "databaseId": "contoso",
+                        "containerId": "order",
+                        "queryText": "SELECT * from c WHERE c.status = 'Completed'"
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "AzureCosmosDB",
+                        "operationId": "QueryDocuments",
+                        "serviceProviderId": "/serviceProviders/AzureCosmosDB"
+                    }
+                },
+                "runAfter": {}
+            },
+            "For_each": {
+                "type": "Foreach",
+                "foreach": "@body('Retrieve_all_processed_order')?['items']",
+                "actions": {
+                    "HTTP": {
+                        "type": "Http",
+                        "inputs": {
+                            "method": "POST",
+                            "uri": "@appsetting('endpointApiLegacy')",
+                            "headers": {
+                                "Content-Type": "application/json"
+                            },
+                            "body": "@items('For_each')"
+                        },
+                        "runAfter": {}
+                    }
+                },
+                "runAfter": {
+                    "Retrieve_all_processed_order": [
+                        "Succeeded"
+                    ]
+                }
+            }
+        },
+        "triggers": {
+            "Recurrence": {
+                "type": "Recurrence",
+                "recurrence": {
+                    "frequency": "Hour",
+                    "interval": 1
+                }
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {}
+    },
+    "kind": "Stateful"
+}
