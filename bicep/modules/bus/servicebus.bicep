@@ -16,25 +16,15 @@ resource serviceBusQueue 'Microsoft.ServiceBus/namespaces/queues@2017-04-01' = {
   }
 }
 
-resource sendRules 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2021-11-01' = {
-  name: 'sendAccess'
+resource rules 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2021-11-01' = {
+  name: 'sendListenAccess'
   parent: serviceBusNamespace
   properties: {
     rights: [
+      'Listen'
       'Send'
     ]
   }
 }
 
-resource listeRules 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2021-11-01' = {
-  name: 'listenAccess'
-  parent: serviceBusNamespace
-  properties: {
-    rights: [
-      'Listen'
-    ]
-  }
-}
-
-output sendRulesName string = sendRules.name
-output listenRulesName string = listeRules.name
+output sbRules string = rules.name

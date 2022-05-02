@@ -3,8 +3,7 @@ param suffix string
 param insightName string
 param storageName string
 param cosmosDBName string
-param sendRulesName string
-param listenRulesName string
+param sbRules string
 
 var logicName = 'logic-app-${suffix}'
 
@@ -20,14 +19,9 @@ resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2021-11-15-preview' exist
   name: cosmosDBName
 }
 
-resource listenRules 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2021-11-01' existing = {
-  name: listenRulesName
+resource serviceBusRule 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2021-11-01' existing = {
+  name: sbRules
 }
-
-resource sendRules 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2021-11-01' existing = {
-  name: sendRulesName
-}
-
 
 var strCnxString = 'DefaultEndpointsProtocol=https;AccountName=${storage.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storage.id, storage.apiVersion).keys[0].value}'
 
@@ -112,10 +106,10 @@ resource logiapp 'Microsoft.Web/sites@2021-02-01' = {
           name: 'AzureCosmosDB_connectionString'
           value: 'AccountEndpoint=https://${cosmosDBName}.documents.azure.com:443/;AccountKey=${cosmos.listKeys().primaryMasterKey};'
         }
-        // {
-        //   name: 'serviceBusSend_connectionString'
-        //   value: sendRules.listKeys().primaryConnectionString
-        // }
+        {
+          name: 'serviceBusSend_connectionString'
+          value: serviceBusRule.listKeys().primaryConnectionString
+        }
       ]
       use32BitWorkerProcess: true
     }
