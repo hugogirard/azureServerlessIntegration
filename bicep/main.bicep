@@ -16,7 +16,6 @@ param publisherEmail string
 param publisherName string
 
 var integrateRgName = 'rg-integration-layer'
-var hubRgName = 'rg-integration-hub'
 var premiseRgName = 'rg-premise-contoso'
 
 var suffixIntegrationGuid = uniqueString(rgIntegration.id)
@@ -26,11 +25,6 @@ resource rgIntegration 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   name: integrateRgName
   location: location
 }
-
-// resource rgHub 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-//   name: hubRgName
-//   location: location
-// }
 
 resource rgOnPremise 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   name: premiseRgName

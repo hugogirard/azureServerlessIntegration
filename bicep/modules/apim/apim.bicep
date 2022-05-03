@@ -9,7 +9,7 @@ param publisherEmail string
 param publisherName string
 
 resource apim 'Microsoft.ApiManagement/service@2021-08-01' = {
-  name: 'apim-${suffix}'
+  name: 'api-${suffix}'
   location: location
   sku: {
     capacity: 1
