@@ -116,12 +116,10 @@
             }
         },
         "triggers": {
-            "Recurrence": {
-                "type": "Recurrence",
-                "recurrence": {
-                    "frequency": "Hour",
-                    "interval": 1
-                }
+            "manual": {
+                "type": "Request",
+                "kind": "Http",
+                "inputs": {}
             }
         },
         "contentVersion": "1.0.0.0",
