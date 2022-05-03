@@ -8,7 +8,7 @@
                     "parameters": {
                         "databaseId": "contoso",
                         "containerId": "order",
-                        "queryText": "SELECT * from c WHERE c.status = 'Completed'"
+                        "queryText": "SELECT * from c WHERE c.status = 'Completed' and processDate >= @{variables('lastPull')}"
                     },
                     "serviceProviderConfiguration": {
                         "connectionName": "AzureCosmosDB",
@@ -16,159 +16,100 @@
                         "serviceProviderId": "/serviceProviders/AzureCosmosDB"
                     }
                 },
+                "runAfter": {
+                    "Condition": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Retrieve_last_pull": {
+                "type": "ServiceProvider",
+                "inputs": {
+                    "parameters": {
+                        "databaseId": "contoso",
+                        "containerId": "parameter",
+                        "itemId": "1",
+                        "partitionKey": "1"
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "AzureCosmosDB",
+                        "operationId": "ReadDocument",
+                        "serviceProviderId": "/serviceProviders/AzureCosmosDB"
+                    }
+                },
                 "runAfter": {}
             },
-            "Validate_if_orders_found": {
+            "Condition": {
                 "type": "If",
                 "expression": {
                     "and": [
                         {
-                            "greater": [
-                                "@body('Retrieve_all_processed_order')?['count']",
-                                0
+                            "equals": [
+                                "@outputs('Retrieve_last_pull')?['statusCode']",
+                                404
                             ]
                         }
                     ]
                 },
                 "actions": {
-                    "Save_Orders_in_legacy_system": {
-                        "type": "Http",
+                    "Set_variable_lastPull": {
+                        "type": "SetVariable",
                         "inputs": {
-                            "method": "POST",
-                            "uri": "@appsetting('legacy_URL')",
-                            "headers": {
-                                "Content-Type": "application/json",
-                                "Ocp-Apim-Subscription-Key": "@appsetting('APIM_subscriptionKey')"
-                            },
-                            "body": "@body('Retrieve_all_processed_order')?['items']"
+                            "name": "lastPull",
+                            "value": "@{addDays(utcNow(),-365)}"
                         },
                         "runAfter": {}
-                    },
-                    "If_POST_legacy_is_success": {
-                        "type": "If",
-                        "expression": {
-                            "and": [
-                                {
-                                    "equals": [
-                                        "",
-                                        200
-                                    ]
-                                }
-                            ]
-                        },
-                        "actions": {
-                            "For_each_orders": {
-                                "type": "Foreach",
-                                "foreach": "@body('Retrieve_all_processed_order')?['items']",
-                                "actions": {
-                                    "Parse_JSON_order": {
-                                        "type": "ParseJson",
-                                        "inputs": {
-                                            "content": "@item()",
-                                            "schema": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "string"
-                                                    },
-                                                    "orderId": {},
-                                                    "status": {
-                                                        "type": "string"
-                                                    },
-                                                    "orderItems": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "object",
-                                                            "properties": {
-                                                                "name": {
-                                                                    "type": "string"
-                                                                },
-                                                                "quantity": {
-                                                                    "type": "integer"
-                                                                },
-                                                                "price": {
-                                                                    "type": "number"
-                                                                }
-                                                            },
-                                                            "required": [
-                                                                "name",
-                                                                "quantity",
-                                                                "price"
-                                                            ]
-                                                        }
-                                                    },
-                                                    "_rid": {
-                                                        "type": "string"
-                                                    },
-                                                    "_self": {
-                                                        "type": "string"
-                                                    },
-                                                    "_etag": {
-                                                        "type": "string"
-                                                    },
-                                                    "_attachments": {
-                                                        "type": "string"
-                                                    },
-                                                    "_ts": {
-                                                        "type": "integer"
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        "runAfter": {}
-                                    },
-                                    "Update_order": {
-                                        "type": "ServiceProvider",
-                                        "inputs": {
-                                            "parameters": {
-                                                "databaseId": "contoso",
-                                                "containerId": "order",
-                                                "item": "{\n   \"id\": @{body('Parse_JSON_order')?['id']},\n   \"status\": @{body('Parse_JSON_order')?['status']},\n   \"orderItems\": @{body('Parse_JSON_orderItems')?['status']},\n   \"sentToLegacy\": true\n}",
-                                                "partitionKey": "@body('Parse_JSON_order')?['id']",
-                                                "isUpsert": true
-                                            },
-                                            "serviceProviderConfiguration": {
-                                                "connectionName": "AzureCosmosDB",
-                                                "operationId": "CreateOrUpdateDocument",
-                                                "serviceProviderId": "/serviceProviders/AzureCosmosDB"
-                                            }
-                                        },
-                                        "runAfter": {
-                                            "Parse_JSON_order": [
-                                                "Succeeded"
-                                            ]
-                                        }
-                                    }
-                                },
-                                "runAfter": {}
-                            }
-                        },
-                        "runAfter": {
-                            "Save_Orders_in_legacy_system": [
-                                "Succeeded"
-                            ]
-                        }
                     }
                 },
                 "runAfter": {
-                    "Initialize_variable": [
+                    "Initialize_variable_last_pull": [
                         "Succeeded"
                     ]
+                },
+                "else": {
+                    "actions": {
+                        "Parse_JSON_parameter": {
+                            "type": "ParseJson",
+                            "inputs": {
+                                "content": "@body('Retrieve_last_pull')?['content']",
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "lastPulling": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "runAfter": {}
+                        },
+                        "Set_variable": {
+                            "type": "SetVariable",
+                            "inputs": {
+                                "name": "lastPull",
+                                "value": "@body('Parse_JSON_parameter')?['lastPulling']"
+                            },
+                            "runAfter": {
+                                "Parse_JSON_parameter": [
+                                    "Succeeded"
+                                ]
+                            }
+                        }
+                    }
                 }
             },
-            "Initialize_variable": {
+            "Initialize_variable_last_pull": {
                 "type": "InitializeVariable",
                 "inputs": {
                     "variables": [
                         {
-                            "name": "order",
-                            "type": "object",
-                            "value": {}
+                            "name": "lastPull",
+                            "type": "string"
                         }
                     ]
                 },
                 "runAfter": {
-                    "Retrieve_all_processed_order": [
+                    "Retrieve_last_pull": [
                         "Succeeded"
                     ]
                 }
