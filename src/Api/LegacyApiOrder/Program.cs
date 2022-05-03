@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,7 +25,7 @@ app.MapGet("{id}",async (string id, IOrderRepository repository) =>
 })
 .WithName("Get Order By ID");
 
-app.MapPost("/",async (Order order, IOrderRepository repository) => 
+app.MapPost("/",async ([FromBody]Order order, IOrderRepository repository) => 
 {
     await repository.CreateAsync(order);
 
@@ -32,7 +33,7 @@ app.MapPost("/",async (Order order, IOrderRepository repository) =>
 })
 .WithName("Create Order");
 
-app.MapPost("/batch",async (IEnumerable<Order> orders, IOrderRepository repository) => 
+app.MapPost("/batch",async ([FromBody]IEnumerable<Order> orders, IOrderRepository repository) => 
 {
     foreach (var order in orders)
     {

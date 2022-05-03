@@ -2,89 +2,35 @@
     "definition": {
         "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
         "actions": {
-            "Retrieve_all_processed_order": {
-                "type": "ServiceProvider",
-                "inputs": {
-                    "parameters": {
-                        "databaseId": "contoso",
-                        "containerId": "order",
-                        "queryText": "SELECT * from c WHERE c.status = 'Completed' and processDate >= @{variables('lastPull')}"
-                    },
-                    "serviceProviderConfiguration": {
-                        "connectionName": "AzureCosmosDB",
-                        "operationId": "QueryDocuments",
-                        "serviceProviderId": "/serviceProviders/AzureCosmosDB"
-                    }
-                },
-                "runAfter": {
-                    "Condition": [
-                        "Succeeded"
-                    ]
-                }
-            },
-            "Retrieve_last_pull": {
-                "type": "ServiceProvider",
-                "inputs": {
-                    "parameters": {
-                        "databaseId": "contoso",
-                        "containerId": "parameter",
-                        "itemId": "1",
-                        "partitionKey": "1"
-                    },
-                    "serviceProviderConfiguration": {
-                        "connectionName": "AzureCosmosDB",
-                        "operationId": "ReadDocument",
-                        "serviceProviderId": "/serviceProviders/AzureCosmosDB"
-                    }
-                },
-                "runAfter": {}
-            },
-            "Condition": {
-                "type": "If",
-                "expression": {
-                    "and": [
-                        {
-                            "equals": [
-                                "@outputs('Retrieve_last_pull')?['statusCode']",
-                                404
-                            ]
-                        }
-                    ]
-                },
+            "If_last_pull_not_found": {
                 "actions": {
                     "Set_variable_lastPull": {
-                        "type": "SetVariable",
                         "inputs": {
                             "name": "lastPull",
-                            "value": "@{addDays(utcNow(),-365)}"
+                            "value": "@{string(addDays(utcNow(),-365))}"
                         },
-                        "runAfter": {}
+                        "runAfter": {},
+                        "type": "SetVariable"
                     }
-                },
-                "runAfter": {
-                    "Initialize_variable_last_pull": [
-                        "Succeeded"
-                    ]
                 },
                 "else": {
                     "actions": {
                         "Parse_JSON_parameter": {
-                            "type": "ParseJson",
                             "inputs": {
                                 "content": "@body('Retrieve_last_pull')?['content']",
                                 "schema": {
-                                    "type": "object",
                                     "properties": {
                                         "lastPulling": {
                                             "type": "string"
                                         }
-                                    }
+                                    },
+                                    "type": "object"
                                 }
                             },
-                            "runAfter": {}
+                            "runAfter": {},
+                            "type": "ParseJson"
                         },
                         "Set_variable": {
-                            "type": "SetVariable",
                             "inputs": {
                                 "name": "lastPull",
                                 "value": "@body('Parse_JSON_parameter')?['lastPulling']"
@@ -93,13 +39,29 @@
                                 "Parse_JSON_parameter": [
                                     "Succeeded"
                                 ]
-                            }
+                            },
+                            "type": "SetVariable"
                         }
                     }
-                }
+                },
+                "expression": {
+                    "and": [
+                        {
+                            "equals": [
+                                "@outputs('Retrieve_last_pull')?['statusCode']",
+                                "NotFound"
+                            ]
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable_last_pull": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "If"
             },
             "Initialize_variable_last_pull": {
-                "type": "InitializeVariable",
                 "inputs": {
                     "variables": [
                         {
@@ -110,20 +72,154 @@
                 },
                 "runAfter": {
                     "Retrieve_last_pull": [
+                        "Succeeded",
+                        "FAILED"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Retrieve_all_processed_order": {
+                "inputs": {
+                    "parameters": {
+                        "containerId": "order",
+                        "databaseId": "contoso",
+                        "queryText": "SELECT * from c WHERE c.status = 'Completed' and c.processedDate >= '@{variables('lastPull')}'"
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "AzureCosmosDB",
+                        "operationId": "QueryDocuments",
+                        "serviceProviderId": "/serviceProviders/AzureCosmosDB"
+                    }
+                },
+                "runAfter": {
+                    "If_last_pull_not_found": [
                         "Succeeded"
                     ]
-                }
-            }
-        },
-        "triggers": {
-            "manual": {
-                "type": "Request",
-                "kind": "Http",
-                "inputs": {}
+                },
+                "type": "ServiceProvider"
+            },
+            "Retrieve_last_pull": {
+                "inputs": {
+                    "parameters": {
+                        "containerId": "parameter",
+                        "databaseId": "contoso",
+                        "itemId": "1",
+                        "partitionKey": "1"
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "AzureCosmosDB",
+                        "operationId": "ReadDocument",
+                        "serviceProviderId": "/serviceProviders/AzureCosmosDB"
+                    }
+                },
+                "runAfter": {},
+                "type": "ServiceProvider"
+            },
+            "Validate_if_new_order_present_since_last_pulling": {
+                "actions": {
+                    "Evaluate_send_to_legacy_system": {
+                        "actions": {
+                            "Update_last_pulling_parameters": {
+                                "inputs": {
+                                    "parameters": {
+                                        "containerId": "parameter",
+                                        "databaseId": "contoso",
+                                        "isUpsert": true,
+                                        "item": "{\n  \"id\": \"1\",\n  \"lastPulling\":\"@{utcNow()}\"\n}",
+                                        "partitionKey": "1"
+                                    },
+                                    "serviceProviderConfiguration": {
+                                        "connectionName": "AzureCosmosDB",
+                                        "operationId": "CreateOrUpdateDocument",
+                                        "serviceProviderId": "/serviceProviders/AzureCosmosDB"
+                                    }
+                                },
+                                "runAfter": {},
+                                "type": "ServiceProvider"
+                            }
+                        },
+                        "expression": {
+                            "and": [
+                                {
+                                    "equals": [
+                                        "@outputs('Send_Order_To_Legacy_System')['statusCode']",
+                                        200
+                                    ]
+                                }
+                            ]
+                        },
+                        "runAfter": {
+                            "Send_Order_To_Legacy_System": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "If"
+                    },
+                    "Send_Order_To_Legacy_System": {
+                        "inputs": {
+                            "body": "@body('Retrieve_all_processed_order')?['items']",
+                            "headers": {
+                                "Content-Type": "application/json",
+                                "Ocp-Apim-Subscription-Key": "@appsetting('ApiKey')"
+                            },
+                            "method": "POST",
+                            "uri": "@appsetting('legacyApiUrl')"
+                        },
+                        "runAfter": {},
+                        "type": "Http"
+                    }
+                },
+                "else": {
+                    "actions": {
+                        "Update_last_pull": {
+                            "inputs": {
+                                "parameters": {
+                                    "containerId": "parameter",
+                                    "databaseId": "contoso",
+                                    "isUpsert": true,
+                                    "item": "{\n  \"id\": \"1\",\n  \"lastPulling\":\"@{utcNow()}\"\n}",
+                                    "partitionKey": "1"
+                                },
+                                "serviceProviderConfiguration": {
+                                    "connectionName": "AzureCosmosDB",
+                                    "operationId": "CreateOrUpdateDocument",
+                                    "serviceProviderId": "/serviceProviders/AzureCosmosDB"
+                                }
+                            },
+                            "runAfter": {},
+                            "type": "ServiceProvider"
+                        }
+                    }
+                },
+                "expression": {
+                    "and": [
+                        {
+                            "greater": [
+                                "@body('Retrieve_all_processed_order')?['count']",
+                                0
+                            ]
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Retrieve_all_processed_order": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "If"
             }
         },
         "contentVersion": "1.0.0.0",
-        "outputs": {}
+        "outputs": {},
+        "triggers": {
+            "Recurrence": {
+                "recurrence": {
+                    "frequency": "Minute",
+                    "interval": 5
+                },
+                "type": "Recurrence"
+            }
+        }
     },
     "kind": "Stateful"
 }

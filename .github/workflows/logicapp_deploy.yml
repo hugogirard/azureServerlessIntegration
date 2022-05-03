@@ -4,11 +4,11 @@ env:
   RESOURCE_GROUP_NAME: rg-integration-layer
 
 on:
- push:
-  branches:
-    - "main"
-  paths:
-    - "src/logicApp/**/*"
+#  push:
+#   branches:
+#     - "main"
+#   paths:
+#     - "src/logicApp/**/*"
  workflow_dispatch:
 
 jobs:

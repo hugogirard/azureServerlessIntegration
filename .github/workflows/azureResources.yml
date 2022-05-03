@@ -1,11 +1,11 @@
 name: Create Azure Resources
 
 on:
- push:
-  branches:
-    - "main"
-  paths:
-    - "bicep/**/*"
+#  push:
+#   branches:
+#     - "main"
+#   paths:
+#     - "bicep/**/*"
  workflow_dispatch:
 
 env:
