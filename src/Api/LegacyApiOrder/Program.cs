@@ -43,6 +43,13 @@ app.MapPost("/batch",async (IEnumerable<Order> orders, IOrderRepository reposito
 })
 .WithName("Create Orders");
 
+app.MapDelete("/", async (IOrderRepository repository) => 
+{
+    await repository.DeleteAsync();
+
+    return Results.Ok();
+});
+
 
 app.Run();
 

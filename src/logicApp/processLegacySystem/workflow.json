@@ -57,11 +57,11 @@
                             ]
                         },
                         "actions": {
-                            "For_each_order": {
+                            "For_each_orders": {
                                 "type": "Foreach",
                                 "foreach": "@body('Retrieve_all_processed_order')?['items']",
                                 "actions": {
-                                    "Parse_JSON_CosmosDB_Item": {
+                                    "Parse_JSON_order": {
                                         "type": "ParseJson",
                                         "inputs": {
                                             "content": "@item()",
@@ -71,9 +71,7 @@
                                                     "id": {
                                                         "type": "string"
                                                     },
-                                                    "customerId": {
-                                                        "type": "string"
-                                                    },
+                                                    "orderId": {},
                                                     "status": {
                                                         "type": "string"
                                                     },
@@ -98,26 +96,45 @@
                                                                 "price"
                                                             ]
                                                         }
+                                                    },
+                                                    "_rid": {
+                                                        "type": "string"
+                                                    },
+                                                    "_self": {
+                                                        "type": "string"
+                                                    },
+                                                    "_etag": {
+                                                        "type": "string"
+                                                    },
+                                                    "_attachments": {
+                                                        "type": "string"
+                                                    },
+                                                    "_ts": {
+                                                        "type": "integer"
                                                     }
                                                 }
                                             }
                                         },
                                         "runAfter": {}
                                     },
-                                    "Set_variable_customer": {
-                                        "type": "SetVariable",
+                                    "Update_order": {
+                                        "type": "ServiceProvider",
                                         "inputs": {
-                                            "name": "order",
-                                            "value": {
-                                                "id": "@body('Parse_JSON_CosmosDB_Item')?['id']",
-                                                "customerId": "@body('Parse_JSON_CosmosDB_Item')?['customerId']",
-                                                "status": "@body('Parse_JSON_CosmosDB_Item')?['status']",
-                                                "sendToLegacySystem": true,
-                                                "orderItems": "@body('Parse_JSON_CosmosDB_Item')?['orderItems']"
+                                            "parameters": {
+                                                "databaseId": "contoso",
+                                                "containerId": "order",
+                                                "item": "{\n   \"id\": @{body('Parse_JSON_order')?['id']},\n   \"status\": @{body('Parse_JSON_order')?['status']},\n   \"orderItems\": @{body('Parse_JSON_orderItems')?['status']},\n   \"sentToLegacy\": true\n}",
+                                                "partitionKey": "@body('Parse_JSON_order')?['id']",
+                                                "isUpsert": true
+                                            },
+                                            "serviceProviderConfiguration": {
+                                                "connectionName": "AzureCosmosDB",
+                                                "operationId": "CreateOrUpdateDocument",
+                                                "serviceProviderId": "/serviceProviders/AzureCosmosDB"
                                             }
                                         },
                                         "runAfter": {
-                                            "Parse_JSON_CosmosDB_Item": [
+                                            "Parse_JSON_order": [
                                                 "Succeeded"
                                             ]
                                         }

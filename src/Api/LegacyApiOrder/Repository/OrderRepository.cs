@@ -21,6 +21,13 @@ public class OrderRepository : IOrderRepository
         return Task.FromResult(order);
     }
 
+    public Task DeleteAsync()
+    {
+        _orders.Clear();
+
+        return Task.CompletedTask;
+    }
+
     public Task<Order?> GetAsync(string id)
     {
         return Task.FromResult(_orders.SingleOrDefault(o => o.Id == id));
