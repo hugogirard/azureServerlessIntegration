@@ -90,7 +90,6 @@
                                 "value": {
                                     "id": "@body('Deserialize_msg_from_queue_to_order_type')?['id']",
                                     "customerId": "@body('Deserialize_msg_from_queue_to_order_type')?['customerId']",
-                                    "orderId": "@body('Deserialize_msg_from_queue_to_order_type')?['orderId']",
                                     "status": "Completed",
                                     "processedDate": "@utcNow()",
                                     "orderItems": "@body('Deserialize_msg_from_queue_to_order_type')?['orderItems']"
