@@ -88,14 +88,15 @@ module dataFactory 'modules/dataFactory/factory.bicep' = {
   }
 }
 
-// module pipeline 'modules/dataFactory/pipeline/copyToBlob.bicep' = {
-//   scope: resourceGroup(rgIntegration.name)
-//   name: 'pipeline'
-//   params: {
-//     azureFactoryName: dataFactory.outputs.dataFactoryName
-//     storageSouceCnxString: storage.outputs.
-//   }
-// }
+module pipeline 'modules/dataFactory/pipeline/copyToBlob.bicep' = {
+  scope: resourceGroup(rgIntegration.name)
+  name: 'pipeline'
+  params: {
+    azureFactoryName: dataFactory.outputs.dataFactoryName
+    storageDestinationName: storage.outputs.strCopyDestination
+    storageSourceName: storage.outputs.strFileName
+  }
+}
 
 module monitoring 'modules/monitoring/insight.bicep' = {
   scope: resourceGroup(rgIntegration.name)
